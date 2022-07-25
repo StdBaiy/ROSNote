@@ -45,3 +45,34 @@
 
 - 只要正在进行的状态不同于全局最小值，就执行PGDA。如果它无法前进，陷入局部极小值，那么该算法会向当前状态添加一些额外的排斥势，直到它自由为止
 - 这个添加的排斥势可以被保存，用于下一次规划中
+
+## EGO-Planner: An ESDF-free Gradient-based Local Planner for Quadrotors
+
+### abstracts
+
+- 优化过程中的轨迹仅覆盖ESDF更新范围的非常有限的空间
+- 该算法由基于梯度的样条优化器和后求精过程组成
+
+### related
+
+- B样条曲线
+  - 三大要素：节点，控制点，阶次
+  - 只需要通过修改t值，就可以表述任意曲线上的任意点
+  - 移动控制点仅仅改变曲线的部分形状，而不改变整体
+  - 具有凸包性质
+
+## FIESTA: Fast Incremental Euclidean Distance Fields for Online Motion Planning of Aerial Robots
+
+### abstracts
+
+- 提出了一个称为FIESTA的映射系统来逐步构建全局ESDF映射
+- 通过引入两个独立的更新队列分别插入和删除障碍物，并使用索引数据结构和双链表进行地图维护
+- 我们的算法使用BFS框架更新尽可能少的节点
+- 我们的ESDF映射具有较高的计算性能，并产生接近最优的结果
+- 通过理论和实验证明，我们的方法在性能和准确性方面优于其他最新方法
+
+### points
+
+- ![](images/fiesta_1.png)
+- ![](images/fiesta_2.jpg)
+- ![](images/fiesta_3.png)
