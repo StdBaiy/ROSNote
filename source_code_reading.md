@@ -2,6 +2,15 @@
 
 ## EGO-PLANNER
 
+### 基本结构
+- plan_env：在线映射算法。它以深度图像（或点云）和相机姿态（里程计）对作为输入，进行光线投射以更新概率体积图，并为规划系统构建欧几里德符号距离场 (ESDF)。
+- path_searching：前端路径搜索算法。目前它包括一个尊重四旋翼动力学的动力学路径搜索。它还包含一个基于采样的拓扑路径搜索算法，以生成多个拓扑独特的路径，这些路径可以捕捉 3D 环境的结构。
+- bspline：基于 B 样条的轨迹表示的实现。
+- bspline_opt：使用 B 样条轨迹的基于梯度的轨迹优化。
+- active_perception：感知感知规划策略，使四旋翼能够主动观察并避开未知障碍物，在未来出现。
+- plan_manage：调度和调用映射和规划算法的高级模块。这里包含启动整个系统的接口以及配置文件。
+- 除了文件夹fast_planner，一个轻量级的uav_simulator用于测试。
+
 ### ego-planner\src\planner\path_searching\src\dyn_a_star.cpp
 
 - 动态A\*寻路算法,又称D\*算法
@@ -60,3 +69,5 @@
 - Eigen
 
 ### ego-planner\src\planner\plan_env\src\grid_map.cpp
+
+膨胀的数字不应超过解析度的4倍
