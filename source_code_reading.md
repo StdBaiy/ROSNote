@@ -11,7 +11,7 @@
 - plan_manage：调度和调用映射和规划算法的高级模块。这里包含启动整个系统的接口以及配置文件。
 - 除了文件夹fast_planner，一个轻量级的uav_simulator用于测试。
 
-### ego-planner\src\planner\path_searching\src\dyn_a_star.cpp
+### `ego-planner\src\planner\path_searching\src\dyn_a_star.cpp`
 
 - 动态A\*寻路算法,又称D\*算法
 
@@ -68,6 +68,38 @@
 
 - Eigen
 
-### ego-planner\src\planner\plan_env\src\grid_map.cpp
+### `ego-planner\src\planner\plan_env\src\grid_map.cpp`
 
-膨胀的数字不应超过解析度的4倍
+- 空白
+
+### `ego-planner\src\planner\plan_manage\src\ego_replan_fsm.cpp`
+
+```c++
+void execFSMCallback(const ros::TimerEvent &e);
+```
+
+- 实现了一个状态机，无人机始终在***起始、等待航点、规划路线、重新规划路线、执行路线、紧急停止***这几个状态间切换
+- ![](images/UAV_status.jpg)
+
+```c++
+void EGOReplanFSM::checkCollisionCallback(const ros::TimerEvent &e);
+```
+
+- 总是根据当前轨迹继续规划,如果检测到碰撞就重新规划
+- 规划失败的时候说明周围有障碍物,检测是否需要急停
+
+```c++
+bool EGOReplanFSM::callReboundReplan(bool flag_use_poly_init, bool flag_randomPolyTraj)
+```
+
+- 弹性规划，两个参数的具体含义不明，推测是跟轨迹随机初始化有关
+- 轨迹规划的具体实现在planner_manage.cpp中
+- 改变接收到的B样条数据格式并发布
+  
+```c++
+bool planFromCurrentTraj();
+```
+
+- 沿当前路径规划，仅在周围没有障碍物的时候调用
+- 会依次尝试调用callReboundReplan(false,false),(true,false),(true,true)全部失败才返回false
+- 
