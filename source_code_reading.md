@@ -1,5 +1,60 @@
 # SOURCE CODE READING
 
+## Prometheus
+
+### 基本结构
+
+### `Prometheus\Modules\simulator_utils\include\map_generator.cpp`
+- 提供了几种基本的地图格式
+    ```cpp
+    pcl::PointCloud<pcl::PointXYZ> global_map_pcl; // 全局点云地图 - pcl格式
+    sensor_msgs::PointCloud2 global_map_ros;       // 全局点云地图 - ros_msg格式
+    pcl::PointCloud<pcl::PointXYZ> local_map_pcl;  // 局部点云地图 - pcl格式
+    sensor_msgs::PointCloud2 local_map_ros;        // 局部点云地图 - ros_msg格式
+    pcl::KdTreeFLANN<pcl::PointXYZ> kdtreeLocalMap;
+    ```
+- 借助几个基本的图形生成函数(圆柱,直线,方形等)生成随机地图
+- 定时发布点云信息（pcl）`/map_generator/local_cloud`
+- 点云信息可以被rviz订阅，生成可视化图
+- 点云还可以被寻路算法订阅，用于计算轨迹    
+
+### `Prometheus\Modules\simulator_utils\quadrotor_dynamics\quadrotor_dynamics.cpp`
+
+- 记录了无人机的详细参数
+    ```c++
+    struct State
+    {
+      Eigen::Vector3d pos;      // 位置
+      Eigen::Vector3d vel;      // 速度
+      Eigen::Matrix3d R;        // 旋转矩阵
+      Eigen::Vector3d omega;    // 角速度
+      Eigen::Array4d motor_rpm; // 电机转速
+      EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+    };
+    ```
+- 提供重设这些参数的接口
+
+### `Prometheus\Modules\simulator_utils\include\fake_uav.h`
+
+- 列出了无人机订阅和发布的话题
+  ```c++
+    // 订阅
+    ros::Subscriber pos_cmd_sub;
+    ros::Subscriber att_cmd_sub;
+    ros::Subscriber ego_cmd_sub;
+    ros::Publisher fake_odom_pub;
+
+    // todo 参看estimator
+    ros::Publisher uav_state_pub;
+    ros::Publisher uav_odom_pub;
+    ros::Publisher uav_trajectory_pub;
+    ros::Publisher uav_mesh_pub;
+    ```
+
+### `Prometheus\Modules\simulator_utils\quadrotor_dynamics\quadrotor_dynamics.cpp`
+
+- 无人机的动力驱动，比较底层
+
 ## EGO-PLANNER
 
 ### 基本结构
@@ -102,4 +157,9 @@ bool planFromCurrentTraj();
 
 - 沿当前路径规划，仅在周围没有障碍物的时候调用
 - 会依次尝试调用callReboundReplan(false,false),(true,false),(true,true)全部失败才返回false
-- 
+
+### `ego-planner\src\planner\plan_manage\src\planner_manager.cpp`
+
+- 紧急停止函数就是简单地把轨迹的控制点全都设为同一个点
+- 用到了Eigen库，大量使用了其中的Vector3d（也即三维向量）表示点、速度、加速度等，用它方便地计算了两个点的距离
+- 本函数库与polynomial_traj.cpp以及plan_env/高度相关，只能读懂大概意思
