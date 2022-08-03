@@ -55,6 +55,41 @@
 
 - 无人机的动力驱动，比较底层
 
+### `Prometheus\Modules\tutorial_demo\basic`
+
+- 本文件夹提供了一些基本的创建、控制无人机的示例
+- 可以通过指定无人机xyz方向上的速度控制移动，也可以直接指定位置的ENU坐标或者经纬度
+- 所有控制信息被封装在一个uav_command.msg里面，通过`"/uav" + std::to_string(uav_id) + "/prometheus/command"`话题发布
+- 无人机命令有两大类，控制和移动
+    ```c++
+    ## 控制命令的模式 
+    uint8 Agent_CMD
+    # Agent_CMD 枚举
+    uint8 Init_Pos_Hover=1  # home点上方悬停
+    uint8 Current_Pos_Hover=2 # 当前位置上方悬停
+    uint8 Land=3
+    uint8 Move=4
+    uint8 User_Mode1=5
+
+    ## 移动命令下的子模式
+    uint8 Move_mode
+    ## 移动命令下的子模式枚举
+    uint8 XYZ_POS = 0               ### 惯性系定点控制
+    uint8 XY_VEL_Z_POS = 1          ### 惯性系定高速度控制
+    uint8 XYZ_VEL = 2               ### 惯性系速度控制
+    uint8 XYZ_POS_BODY = 3          ### 机体系位置控制
+    uint8 XYZ_VEL_BODY = 4          ### 机体系速度控制
+    uint8 XY_VEL_Z_POS_BODY = 5     ### 机体系定高速度控制
+    uint8 TRAJECTORY = 6            ### 轨迹追踪控制
+    uint8 XYZ_ATT = 7               ### 姿态控制（来自外部控制器）
+    uint8 LAT_LON_ALT = 8           ### 绝对坐标系下的经纬度
+    ```
+### `Prometheus\Modules\tutorial_demo\advance`
+
+- 含有一些进阶案例，比如自动寻找平面上的二维码并降落在上面
+- 考虑把它和自动寻路算法结合，以此作为目标追踪的原形
+- 目前避障模块还有一些问题，打算对比ego-planner修改适配，关键点就在于那个map_generator模块
+
 ## EGO-PLANNER
 
 ### 基本结构
