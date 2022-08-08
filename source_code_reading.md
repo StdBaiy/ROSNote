@@ -90,6 +90,63 @@
 - 考虑把它和自动寻路算法结合，以此作为目标追踪的原形
 - 目前避障模块还有一些问题，打算对比ego-planner修改适配，关键点就在于那个map_generator模块
 
+### `Prometheus\Modules\motion_planning\local_planner`
+
+
+
+### `Prometheus\Modules\motion_planning\local_planner`
+
+- 实际上包含了两个势场算法apf和vfh(都通过计算合力获取速度)
+- 输入：从传感器获取当前的位置、局部地图、局部点云，目标位置；输出：期望速度
+    ``` c++
+    sensor_msgs::PointCloud2ConstPtr &local_map_ptr //局部地图(实际计算中没有使用)
+    pcl::PointCloud<pcl::PointXYZ>::Ptr &pcl_ptr //局部点云(用于计算)
+    nav_msgs::Odometry cur_odom //本地位置
+    Eigen::Vector3d &goal //目标位置
+    Eigen::Vector3d &desired_vel //期望速度
+    ```
+- 应该是定时读取传感器并实时修改速度，算法效果估计不优秀
+
+### `Prometheus\Scripts\simulation\motion_planning\apf_with_local_pcl.sh`
+
+- 以此脚本为例，实现了一个apf自动寻路
+- 运行模拟寻路算法的主要流程
+   1. 启动gazebo，根据gazebo的世界创建点云地图
+      1. 调用了map_generator，
+   2. 启动px4，配置模拟无人机的相关参数
+   3. 启动控制节点和虚拟摇杆驱动
+      1. 控制节点负责把期望速度
+   4. 启动寻路算法节点
+      1. 该部分可以配置诸如安全距离、感知距离、膨胀参数等参数
+      ```xml
+        <!-- 参数 -->
+        <param name="uav_id" value="1"/>
+        <param name="global_planner/sim_mode" value="true"/>
+        <param name="global_planner/local_pcl_topic_name" value="/map_generator/local_cloud"/>
+        <!-- 地图输入模式 0代表全局点云，1代表局部点云，2代表激光雷达scan数据 -->
+        <param name="global_planner/map_input_source" value="1"/>
+        <!-- 无人机飞行高度，建议与起飞高度一致 -->
+        <param name="global_planner/fly_height" value="1.5"/>
+        <!-- 路径追踪频率 -->
+        <param name="global_planner/time_per_path" value="1.0"/>
+        <!-- Astar重规划频率 -->       
+        <param name="global_planner/replan_time" value="5.0"/>
+        <!-- 地图参数 -->
+        <param name="map/border" value="true"/>
+        <param name="map/queue_size" value="5"/>
+        <!-- 分辨率 -->
+        <param name="map/resolution" value="0.2"/>
+        <!-- 障碍物膨胀距离,建议为飞机的轴距1.5倍 -->
+        <param name="map/inflate" value="0.4"/>
+        <!-- 地图范围 -->
+        <param name="map/origin_x" value="-15.0"/>
+        <param name="map/origin_y" value="-15.0"/>
+        <param name="map/origin_z" value="-0.5"/>
+        <param name="map/map_size_x" value="30.0"/>
+        <param name="map/map_size_y" value="30.0"/>
+        <param name="map/map_size_z" value="3.0"/>
+      ```
+
 ## EGO-PLANNER
 
 ### 基本结构
