@@ -7,6 +7,7 @@
 1. 改写寻路（避障）算法
 2. 追加目标追踪模块
 3. 集群编队飞行
+4. 结合目标追踪和避障模块（增设吊舱移动功能）
 
 ### 主要难点？
 
@@ -20,7 +21,8 @@
 1. local_planner和global_planner的关系是什么？
 2. 全局地图更新和局部地图更新有啥区别？
    - 由slam生成的是全局地图，由传感器获取的是局部地图
-3. 
+3. 源码里面还有一个2D雷达的规划方式，又是什么情况
+4. global_planner里面也分为gloabal_point和local_point，二者有什么区别
 
 ## Points
 
@@ -33,3 +35,4 @@
 5. fast-lab的算法在点云的基础上进一步抽象成栅格地图，不过那是算法的实现细节
 6. Prometheus的避障算法基本都是定高飞行，fast-lab实现了z轴上的飞行
 7. Prometheus的local_planner是一个父类，apf和vfh分别实现了它的compute_force函数，从而实现了不同的规划算法，其中apf简单地把引力和斥力的和作为期望速度
+8. 在Yolo+SiamRPN中，把YoloV5单独启动为一个Client，通过TCP传递数据，并把数据转为相应的.msg格式，在点击了追踪目标后，无人机将启用SiamRPN追踪该目标
