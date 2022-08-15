@@ -147,6 +147,52 @@
         <param name="map/map_size_z" value="3.0"/>
       ```
 
+### `Prometheus\Modules\tutorial_demo\advanced\siamrpn_track\src\siamrpn_track.cpp`
+
+- 功能:根据摄像头信息控制无人机移动追踪
+- 根据相机标定估算距离
+- 订阅siamrpn的输出结果`DetectionInfo.msg`,格式如下
+    ```c++
+    # 目标信息
+    std_msgs/Header header
+    ## 目标类别名称
+    string object_name
+    ## 是否检测到目标
+    bool detected
+    ## 0表示相机坐标系, 1表示机体坐标系, 2表示惯性坐标系
+    int32 frame
+    ## 目标位置[相机系下：右方x为正，下方y为正，前方z为正]
+    float32[3] position
+    ## 目标姿态-欧拉角-(z,y,x)
+    float32[3] attitude
+    ## 目标姿态-四元数-(qx,qy,qz,qw)
+    float32[4] attitude_q
+    ## 视线角度[相机系下：右方x角度为正，下方y角度为正]
+    float32[2] sight_angle
+    ## 像素位置[相机系下：右方x为正，下方y为正]
+    int32[2] pixel_position
+    ## 偏航角误差
+    float32 yaw_error
+    ## 类别
+    int32 category
+    ```
+
+### `Prometheus\Modules\object_detection\py_nodes\yolov5_tensorrt_client\yolov5_tensorrt_client.py`
+
+- 像是一个客户端，那么服务器端是哪里？
+- 发布到`/prometheus/object_detection/yolov5_openvino_det`话题下,类型如下:
+- `MultiDetectionInfo.msg`,用于多点检测
+    ```c++
+    Header header
+    ## 检测到的目标数量
+    int32 num_objs
+    ## Detecting or Tracking (0:detect, 1:track)
+    int32 detect_or_track
+    ## 每个目标的检测结果
+    DetectionInfo[] detection_infos
+    ```
+- 如果是目标追踪,则只能单点
+
 ## EGO-PLANNER
 
 ### 基本结构
