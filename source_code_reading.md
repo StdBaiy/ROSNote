@@ -175,7 +175,48 @@
 
 - 实现了一个客户端，接收服务器的数据
 - 如果是处于识别阶段，就把数据整合成MultiDetectionInfo.msg发布到`/prometheus/object_detection/yolov5_openvino_det`（识别时可能会有多个目标）
+- `MultiDetectionInfo.msg`,用于多点检测
+    ```c++
+    Header header
+    ## 检测到的目标数量
+    int32 num_objs
+    ## Detecting or Tracking (0:detect, 1:track)
+    int32 detect_or_track
+    ## 每个目标的检测结果
+    DetectionInfo[] detection_infos
+    ```
 - 如果是追踪阶段，就把DetectionInfo.msg发布到`/prometheus/object_detection/siamrpn_tracker`
+- `DetectionInfo.msg`,格式如下
+    ```c++
+    # 目标信息
+    std_msgs/Header header
+    ## 目标类别名称
+    string object_name
+    ## 是否检测到目标
+    bool detected
+    ## 0表示相机坐标系, 1表示机体坐标系, 2表示惯性坐标系
+    int32 frame
+    ## 目标位置[相机系下：右方x为正，下方y为正，前方z为正]
+    float32[3] position
+    ## 目标姿态-欧拉角-(z,y,x)
+    float32[3] attitude
+    ## 目标姿态-四元数-(qx,qy,qz,qw)
+    float32[4] attitude_q
+    ## 视线角度[相机系下：右方x角度为正，下方y角度为正]
+    float32[2] sight_angle
+    ## 像素位置[相机系下：右方x为正，下方y为正]
+    int32[2] pixel_position
+    ## 偏航角误差
+    float32 yaw_error
+    ## 类别
+    int32 category
+    ```
+
+### `Prometheus\Modules\tutorial_demo\advanced\siamrpn_track\src\siamrpn_track.cpp`
+
+- 功能:根据摄像头信息控制无人机移动追踪
+- 根据相机标定估算距离
+
 
 ## EGO-PLANNER
 
