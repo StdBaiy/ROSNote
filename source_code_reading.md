@@ -147,6 +147,36 @@
         <param name="map/map_size_z" value="3.0"/>
       ```
 
+### `Prometheus/Modules/object_detection_yolov5tensorrt/yolov5_trt_ros.py`
+
+- 订阅摄像头话题，交给YoloV5处理
+- 实现了一个服务器，把预测结果发给客户端
+- 创建了一个监视窗口，内容是摄像头的数据，会把识别框显示出来，并提供了点击识别框的功能
+- 如果点击了一个识别框，就会启动siamRPN，开始追踪，此后的输入图像都交给siamRPn处理
+- 两种情况公用一套传输模板：
+    ```python
+    # FrameID, 是否检测到目标(0/1,>1:num-of-objs), obj-order, 类别, x (0-1), y (0-1), w (0-1), h (0-1), 置信度, 0:detecting-mode
+                    # 按照如下格式发送数据，实际上是字符串
+                    client_socket.send('{:08d},{:03d},{:03d},{:03d},{:.3f},{:.3f},{:.3f},{:.3f},{:.3f},{:04d},{:04d},0'.format(
+                        self.frame_cnt,
+                        len(result_boxes),
+                        i,
+                        int(result_classid[i]),
+                        box[0] / image_raw.shape[1],
+                        box[1] / image_raw.shape[0],
+                        (box[2]-box[0]) / image_raw.shape[1],
+                        (box[3]-box[1]) / image_raw.shape[0],
+                        result_scores[i],
+                        int((box[0]+box[2])/2),
+                        int((box[1]+box[3])/2)).encode('utf-8'))
+    ```
+
+### `Prometheus/Modules/object_detection/py_nodes/yolov5_tensorrt_client/yolov5_tensorrt_client.py`
+
+- 实现了一个客户端，接收服务器的数据
+- 如果是处于识别阶段，就把数据整合成MultiDetectionInfo.msg发布到`/prometheus/object_detection/yolov5_openvino_det`（识别时可能会有多个目标）
+- 如果是追踪阶段，就把DetectionInfo.msg发布到`/prometheus/object_detection/siamrpn_tracker`
+
 ## EGO-PLANNER
 
 ### 基本结构

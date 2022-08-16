@@ -15,6 +15,9 @@
 2. 搞清楚关键话题，比如地图、速度控制，在此基础上移植
 3. 在模拟中，如果能把gazebo的世界直接转化成点云，就可以构建很多复杂的地图用于测试
    - 在网上找到个[开源包](https://github.com/laboshinl/loam_velodyne)，可以转化
+4. 结合的难点
+   1. 寻路算法会在rviz里给出目标点，也就是说提前知道了全局地图，但是目标追踪似乎不需要全局地图
+   2. 
 
 ### 一些疑惑
 
@@ -36,3 +39,33 @@
 6. Prometheus的避障算法基本都是定高飞行，fast-lab实现了z轴上的飞行
 7. Prometheus的local_planner是一个父类，apf和vfh分别实现了它的compute_force函数，从而实现了不同的规划算法，其中apf简单地把引力和斥力的和作为期望速度
 8. 在Yolo+SiamRPN中，把YoloV5单独启动为一个Client，通过TCP传递数据，并把数据转为相应的.msg格式，在点击了追踪目标后，无人机将启用SiamRPN追踪该目标
+9. 
+
+### 结合策略
+
+- 寻路算法的启动顺序(以local_planner的apf为例)
+   1. 启动roscore
+   2. 启动map_generator.launch
+      1. 启动gazebo world
+      2. 启动rviz
+      3. 定义集群数量，地图类型
+      4. 启动map_generator_node，生成随机地图，并发布全局、局部点云
+   3. 启动sitl_px4_indoor.launch
+      1. 加载p230模型
+      2. 无人机编号，初始位置，航角
+      3. 启动mavros
+   4. 启动uav_control_main_indoor.launch
+      1. 启动uav控制节点
+      2. 启动虚拟摇杆驱动
+   5. 启动apf算法
+      1. 配置算法的具体参数
+- 目标检测与追踪算法的启动顺序
+   1. 启动yolov5_track_all.launch
+      1. 加载gazebo地图，加载p450模型，启动px4
+      2. 启动yolov5_tensorrt_client.py
+      3. 启动siamrpn_track
+      4. 启动yolov5_trt_ros.py
+- 尝试先更改地图和模型，使之符合object_detection的功能
+- 在siamRPN模块中更改追踪策略，改为发布目标点形式，并调用寻路算法
+- 想实现的效果：无人机自动跟随人物运动并避障（可以写一个控制人物模型的脚本，同时使障碍物运动起来，目前的代码需要大改）
+- 需不需要写一个点云生成的算法？
