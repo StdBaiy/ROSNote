@@ -49,6 +49,9 @@
    2. 当连续一段时间无法检测到目标时，认定目标丢失
    3. demo里直接根据距离给出速度了,我们应该加入避障的模块
    4. 由siam_rpn.py发布`/prometheus/object_detection/siamrpn_tracker`话题，并由siamrpn_tracker.cpp接受
+10. 摄像头输入的数据会由一个CvBridge的包处理成为cv2格式的图片
+11. 话题`/uav/pometheus/state`中的attitude和attitude_q是描述无人机俯仰角和朝向的
+12. 
 
 ### 结合策略
 

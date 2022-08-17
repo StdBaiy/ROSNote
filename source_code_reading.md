@@ -152,7 +152,7 @@
 - 订阅摄像头话题，交给YoloV5处理
 - 实现了一个服务器，把预测结果发给客户端
 - 创建了一个监视窗口，内容是摄像头的数据，会把识别框显示出来，并提供了点击识别框的功能
-- 如果点击了一个识别框，就会启动siamRPN，开始追踪，此后的输入图像都交给siamRPn处理
+- 如果点击了一个识别框，就会启动siamRPN，开始追踪，此后的输入图像都交给siamRPN处理
 - 两种情况公用一套传输模板：
     ```python
     # FrameID, 是否检测到目标(0/1,>1:num-of-objs), obj-order, 类别, x (0-1), y (0-1), w (0-1), h (0-1), 置信度, 0:detecting-mode
@@ -174,7 +174,7 @@
 ### `Prometheus/Modules/object_detection/py_nodes/yolov5_tensorrt_client/yolov5_tensorrt_client.py`
 
 - 实现了一个客户端，接收服务器的数据
-- 如果是处于识别阶段，就把数据整合成MultiDetectionInfo.msg发布到`/prometheus/object_detection/yolov5_openvino_det`（识别时可能会有多个目标）
+- 如果是处于识别阶段，就把数据整合成MultiDetectionInfo.msg发布到`/uav/prometheus/object_detection/yolov5_openvino_det`（识别时可能会有多个目标）
 - `MultiDetectionInfo.msg`,用于多点检测
     ```c++
     Header header
@@ -185,7 +185,7 @@
     ## 每个目标的检测结果
     DetectionInfo[] detection_infos
     ```
-- 如果是追踪阶段，就把DetectionInfo.msg发布到`/prometheus/object_detection/siamrpn_tracker`
+- 如果是追踪阶段，就把DetectionInfo.msg发布到`/uav/prometheus/object_detection/siamrpn_tracker`
 - `DetectionInfo.msg`,格式如下
     ```c++
     # 目标信息
@@ -215,8 +215,9 @@
 ### `Prometheus\Modules\tutorial_demo\advanced\siamrpn_track\src\siamrpn_track.cpp`
 
 - 功能:根据摄像头信息控制无人机移动追踪
-- 根据相机标定估算距离
-
+- 根据相机标定估算距离，存在DetectionInfo.position里，是目标相对于相机的坐标（也就是相机为原点）
+- 在模拟中，相机是固定的，因此加上一个固定的偏移值就可以得到相对无人机的位置（也就是以无人机为原点）
+- 得到了相对无人机的位置，把xyz方向的距离减去一个间隔距离（也就是期望无人机飞到目标的哪个位置），直接把各个方向的速度发布出去
 
 ## EGO-PLANNER
 
