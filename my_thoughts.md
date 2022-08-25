@@ -23,6 +23,12 @@
 7. siamRPN和YOLO为什么要结合使用？分工是什么
    - 是不是可以用YOLO自动框选出目标，再由siamRPN追踪？
    - 实际上siamRPN的输出和YOLO很类似，但是YOLO会辨认出它识别出的目标，siamRPN则会不断地在周围寻找最初框选的目标
+8. 训练YoloV5模型的时候出现问题，模型无法识别
+   1. 更改了Cuda版本，无效
+   2. 改为cpu训练和推理，无效
+   3. 推测是数据集的问题，打算更改一下数据集再测试
+   4. 已解决，是训练轮次不够
+9. 把我和tty的数据放一起训练，会导致识别不出tty，推测原因是我拍的角度变化比较大（对于人脸应该尽量从正面采集数据？）
 
 ### 一些疑惑
 
@@ -51,7 +57,23 @@
    4. 由siam_rpn.py发布`/prometheus/object_detection/siamrpn_tracker`话题，并由siamrpn_tracker.cpp接受
 10. 摄像头输入的数据会由一个CvBridge的包处理成为cv2格式的图片
 11. 话题`/uav/pometheus/state`中的attitude和attitude_q是描述无人机俯仰角和朝向的
-12. 
+12. YoloV5的训练过程
+    1.  准备数据集
+    2.  在data目录下写好该数据集的相关yaml文件，主要内容是种类数量及名字,数据集的路径
+    3.  配置train.py的参数
+      - --weights，预训练模型pt文件的路径
+      - --cfg，预训练模型的yaml文件路径
+      - --data，第二步yaml文件的路径
+      - --epochs，训练轮次
+      - --batch_size，根据显卡的显存决定
+      - --workers，线程数，根据CPU决定
+13. YoloV5的推理测试
+    1.  配置detect.py的参数
+      - --weights，pt文件的路径，当然也可以是wts文件
+      - --save-dir，保存路径
+      - --source，要检测的文件或文件夹，为0代表摄像头输入
+      - --save-txt
+      - --device，数字代表显卡序号，单显卡为0，也可以写'cpu'
 
 ### 结合策略
 
