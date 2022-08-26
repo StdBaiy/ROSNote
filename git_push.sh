@@ -29,14 +29,14 @@ else
 fi
 
 let n=0
-while push_result=`git push --porcelain origin main`;do
+while push_result=`git push origin main`;do
     let n++
     if [ $n -gt 5 ];then
         echo -e $RED "推送失败，请检查配置或者网络" $END
         exit 1
     fi
     # 这里由于git push的返回结果有延迟
-    if [[ $push_result =~ "Done" ]];then
+    if [[ $push_result =~ "completed" ]];then
         echo -e $GREEN "推送完成" $END
         exit 0
     else
