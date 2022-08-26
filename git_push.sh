@@ -37,7 +37,7 @@ while push_result=$(git push origin main 2>&1);do
     fi
     echo $push_result
     # 这里由于git push的返回结果有延迟
-    if [[ $push_result =~ "completed" ]];then
+    if [[ $push_result =~ "To github.com" ]];then
         echo -e $GREEN "推送完成" $END
         exit 0
     elif [[ $push_result =~ "Everything up-to-date" ]];then
