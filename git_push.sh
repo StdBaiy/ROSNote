@@ -42,7 +42,7 @@ let n=0
 #     echo "yes"
 # fi
 while push_result=`git push git@github.com:StdBaiy/ROSNote.git`;do
-    if [ $n -gt 5 ]
+    if [ $n -gt 5 ];then
         echo -e $RED "推送失败，请检查配置或者网络" $END
         exit 1
     fi
