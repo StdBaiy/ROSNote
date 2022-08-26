@@ -37,37 +37,17 @@ else
 fi
 
 let n=0
-# let n++
-# if [ $n -gt 1 ];then
-#     echo "yes"
-# fi
-# while push_result=`git push git@github.com:StdBaiy/ROSNote.git`;do
-#     if [ $n -gt 5 ];then
-#         echo -e $RED "推送失败，请检查配置或者网络" $END
-#         exit 1
-#     fi
-
-#     sleep 10s
-
-#     if [[ $push_result =~ "completed" ]];then
-#         echo -e $GREEN "推送完成" $END
-#         exit 0
-#     elif [[ $push_result =~ "time out" ]];then
-#         echo -e$RED "连接失败，正在重试($n/5)" $END
-#     else
-#         # 异常情况
-#         echo -e $RED "异常情况，程序退出，具体见push信息：" $END
-#         # echo -e $push_result
-#         exit 1
-#     fi
-#     let n++
-# done
-
-while true;do
-    if git push git@github.com:StdBaiy/ROSNote.git;then
-        echo "push成功"
+while push_result=`git push --porcelain origin main`;do
+    let n++
+    if [ $n -gt 5 ];then
+        echo -e $RED "推送失败，请检查配置或者网络" $END
+        exit 1
+    fi
+    # 这里由于git push的返回结果有延迟
+    if [[ $push_result =~ "Done" ]];then
+        echo -e $GREEN "推送完成" $END
         exit 0
     else
-        echo "push失败，重试"
+        echo -e$RED "push失败，正在重试($n/5)" $END
     fi
 done
