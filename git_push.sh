@@ -15,7 +15,7 @@ then
 else
     pushmessage="$*"
 fi
-echo -e $RED $pushmessage $END
+echo -e $GREEN $pushmessage $END
 
 git add *
 
