@@ -69,4 +69,5 @@ while true;do
         exit 0
     else
         echo "push失败，重试"
+    fi
 done
