@@ -35,6 +35,7 @@ while push_result=$(git push origin main 2>&1);do
         echo -e $RED "推送失败，请检查配置或者网络" $END
         exit 1
     fi
+    echo $push_result
     # 这里由于git push的返回结果有延迟
     if [[ $push_result =~ "completed" ]];then
         echo -e $GREEN "推送完成" $END
