@@ -29,7 +29,7 @@ else
 fi
 
 let n=0
-while push_result=`git push origin main`;do
+while push_result=$(git push origin main 2>&1);do
     let n++
     if [ $n -gt 5 ];then
         echo -e $RED "推送失败，请检查配置或者网络" $END
@@ -39,6 +39,8 @@ while push_result=`git push origin main`;do
     if [[ $push_result =~ "completed" ]];then
         echo -e $GREEN "推送完成" $END
         exit 0
+    elif [[ $push_result =~ "Everything up-to-date" ]];then
+        echo -e $GREEN "已经与最新的远程仓库同步，不需要重复推送" $END
     else
         echo -e $RED "push失败，正在重试($n/5)" $END
     fi
