@@ -47,6 +47,8 @@ while push_result=`git push git@github.com:StdBaiy/ROSNote.git`;do
         exit 1
     fi
 
+    sleep 3s
+
     if [[ $push_result =~ "completed" ]];then
         echo -e $GREEN "推送完成" $END
         exit 0
