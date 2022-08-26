@@ -57,7 +57,7 @@ while push_result=`git push git@github.com:StdBaiy/ROSNote.git`;do
     else
         # 异常情况
         echo -e $RED "异常情况，程序退出，具体见push信息：" $END
-        echo -e $push_result
+        # echo -e $push_result
         exit 1
     fi
     let n++
