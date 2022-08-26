@@ -41,6 +41,7 @@ while push_result=$(git push origin main 2>&1);do
         exit 0
     elif [[ $push_result =~ "Everything up-to-date" ]];then
         echo -e $GREEN "已经与最新的远程仓库同步，不需要重复推送" $END
+        exit 0
     else
         echo -e $RED "push失败，正在重试($n/5)" $END
     fi
