@@ -40,6 +40,6 @@ while push_result=`git push origin main`;do
         echo -e $GREEN "推送完成" $END
         exit 0
     else
-        echo -e$RED "push失败，正在重试($n/5)" $END
+        echo -e $RED "push失败，正在重试($n/5)" $END
     fi
 done
