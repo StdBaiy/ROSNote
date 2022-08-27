@@ -33,3 +33,12 @@
 5. fast-lab的算法在点云的基础上进一步抽象成栅格地图，不过那是算法的实现细节
 6. Prometheus的避障算法基本都是定高飞行，fast-lab实现了z轴上的飞行
 7. Prometheus的local_planner是一个父类，apf和vfh分别实现了它的compute_force函数，从而实现了不同的规划算法，其中apf简单地把引力和斥力的和作为期望速度
+
+### 源码改动
+
+1. Modules/common/CMakeLists.txt
+2. darknet_ros部分
+3. prometheus_msg部分
+4. object_detection的CMakeLists，注释掉ellipse和sample部分
+5. 修改YoloDetector.cpp .hpp内容
+6. 修改CheckForObjects.action的内容
