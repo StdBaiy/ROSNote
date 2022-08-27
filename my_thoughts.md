@@ -7,6 +7,7 @@
 1. 改写寻路（避障）算法
 2. 追加目标追踪模块
 3. 集群编队飞行
+4. 结合目标追踪和避障模块（增设吊舱移动功能）
 
 ### 主要难点？
 
@@ -14,13 +15,28 @@
 2. 搞清楚关键话题，比如地图、速度控制，在此基础上移植
 3. 在模拟中，如果能把gazebo的世界直接转化成点云，就可以构建很多复杂的地图用于测试
    - 在网上找到个[开源包](https://github.com/laboshinl/loam_velodyne)，可以转化
+4. 结合的难点
+   1. 寻路算法会在rviz里给出目标点，也就是说提前知道了全局地图，但是目标追踪似乎不需要全局地图
+   2. 
+5. 目标追踪模块需要安装一大堆驱动
+6. siamRPN需要事先手动框选目标，有没有办法避免？
+7. siamRPN和YOLO为什么要结合使用？分工是什么
+   - 是不是可以用YOLO自动框选出目标，再由siamRPN追踪？
+   - 实际上siamRPN的输出和YOLO很类似，但是YOLO会辨认出它识别出的目标，siamRPN则会不断地在周围寻找最初框选的目标
+8. 训练YoloV5模型的时候出现问题，模型无法识别
+   1. 更改了Cuda版本，无效
+   2. 改为cpu训练和推理，无效
+   3. 推测是数据集的问题，打算更改一下数据集再测试
+   4. 已解决，是训练轮次不够
+9. 把我和tty的数据放一起训练，会导致识别不出tty，推测原因是我拍的角度变化比较大（对于人脸应该尽量从正面采集数据？）
 
 ### 一些疑惑
 
 1. local_planner和global_planner的关系是什么？
 2. 全局地图更新和局部地图更新有啥区别？
    - 由slam生成的是全局地图，由传感器获取的是局部地图
-3. 
+3. 源码里面还有一个2D雷达的规划方式，又是什么情况
+4. global_planner里面也分为gloabal_point和local_point，二者有什么区别
 
 ## Points
 
@@ -42,3 +58,103 @@
 4. object_detection的CMakeLists，注释掉ellipse和sample部分
 5. 修改YoloDetector.cpp .hpp内容
 6. 修改CheckForObjects.action的内容
+7. 在Yolo+SiamRPN中，把YoloV5单独启动为一个Client，通过TCP传递数据，并把数据转为相应的.msg格式，在点击了追踪目标后，无人机将启用SiamRPN追踪该目标
+8. 使用YOLO作为目标检测，siamRPN作为目标跟踪
+   1. 事先标定相机参数,并提供目标的大致大小,根据目标在镜头中的大小可以估算出距目标的距离
+   2. 当连续一段时间无法检测到目标时，认定目标丢失
+   3. demo里直接根据距离给出速度了,我们应该加入避障的模块
+   4. 由siam_rpn.py发布`/prometheus/object_detection/siamrpn_tracker`话题，并由siamrpn_tracker.cpp接受
+9.  摄像头输入的数据会由一个CvBridge的包处理成为cv2格式的图片
+10. 话题`/uav/pometheus/state`中的attitude和attitude_q是描述无人机俯仰角和朝向的
+11. YoloV5的训练过程
+    1.  准备数据集
+    2.  在data目录下写好该数据集的相关yaml文件，主要内容是种类数量及名字,数据集的路径
+    3.  配置train.py的参数
+      - --weights，预训练模型pt文件的路径
+      - --cfg，预训练模型的yaml文件路径
+      - --data，第二步yaml文件的路径
+      - --epochs，训练轮次
+      - --batch_size，根据显卡的显存决定
+      - --workers，线程数，根据CPU决定
+12. YoloV5的推理测试
+    1.  配置detect.py的参数
+      - --weights，pt文件的路径，当然也可以是wts文件
+      - --save-dir，保存路径
+      - --source，要检测的文件或文件夹，为0代表摄像头输入
+      - --save-txt
+      - --device，数字代表显卡序号，单显卡为0，也可以写'cpu'
+13. ComplexYolo
+    1.  输入3D点云经过降维而成的2D鸟瞰图，先将三维点云进行栅格化，将点集分布到鸟瞰图空间的网格中，然后编码网格内点集的最大高度，最大强度，点云密度三种信息归一化后分别填充到R，G，B三个通道中形成RGB-Map，然后采用YOLOv2的Darknet19进行特征提取并回归出目标的相对中心点（不直观，点云预处理需要时间）
+    2.  数据集的基本格式
+         ```text
+         └── dataset/    
+         └── kitti/
+            ├──ImageSets/
+            │   ├── train.txt
+            │   └── val.txt
+            ├── training/
+            │   ├── image_2/ <-- for visualization
+            │   ├── calib/
+            │   ├── label_2/
+            │   └── velodyne/
+            └── testing/  
+            │   ├── image_2/ <-- for visualization
+            │   ├── calib/
+            │   └── velodyne/ 
+            └── classes_names.txt
+         ```
+        1. calib：标定校准文件主要作用是把激光雷达坐标系测得的点云坐标转换到相机坐标中去
+        2. velodyne：点云数据以浮点二进制文件格式存储，每行包含8个数据，每个数据由四位十六进制数表示（浮点数），每个数据通过空格隔开。一个点云数据由四个浮点数数据构成，分别表示点云的x、y、z、r（强度 or 反射值）
+        3. label_2:
+           - 第1列
+            目标类比别（type），共有8种类别，分别是Car、Van、Truck、Pedestrian、Person_sitting、Cyclist、Tram、Misc或'DontCare。DontCare表示某些区域是有目标的，但是由于一些原因没有做标注，比如距离激光雷达过远。但实际算法可能会检测到该目标，但没有标注，这样会被当作false positive （FP）。这是不合理的。用DontCare标注后，评估时将会自动忽略这个区域的预测结果，相当于没有检测到目标，这样就不会增加FP的数量了。此外，在 2D 与 3D Detection Benchmark 中只针对 Car、Pedestrain、Cyclist 这三类。
+           - 第2列
+            截断程度（truncated），表示处于边缘目标的截断程度，取值范围为0~1，0表示没有截断，取值越大表示截断程度越大。处于边缘的目标可能只有部分出现在视野当中，这种情况被称为截断。
+           - 第3列
+            遮挡程度（occlude），取值为（0，1，2，3）。0表示完全可见，1表示小部分遮挡，2表示大部分遮挡，3表示未知（遮挡过大）。
+           - 第4列
+            观测角度（alpha）,取值范围为（-pi, pi）。是在相机坐标系下，以相机原点为中心，相机原点到物体中心的连线为半径，将物体绕相机y轴旋转至相机z轴，此时物体方向与相机x轴的夹角。这相当于将物体中心旋转到正前方后，计算其与车身方向的夹角。
+           - 第5-8列
+            二维检测框（bbox），目标二维矩形框坐标，分别对应left、top、right、bottom，即左上（xy）和右下的坐标（xy）。
+           - 第9-11列
+            三维物体的尺寸（dimensions），分别对应高度、宽度、长度，以米为单位。
+           - 第12-14列
+            中心坐标（location），三维物体中心在相机坐标系下的位置坐标（x，y，z），单位为米。
+           - 第15列
+            旋转角（rotation_y），取值范围为（-pi, pi）。表示车体朝向，绕相机坐标系y轴的弧度值，即物体前进方向与相机坐标系x轴的夹角。rolation_y与alpha的关系为alpha=rotation_y - theta，theta为物体中心与车体前进方向上的夹角。alpha的效果是从正前方看目标行驶方向与车身方向的夹角，如果物体不在正前方，那么旋转物体或者坐标系使得能从正前方看到目标，旋转的角度为theta。
+           - 第16列
+            置信度分数（score），仅在测试评估的时候才需要用到。置信度越高，表示目标越存在的概率越大。
+        4. image2：KITTI数据集种共包含了4相机数据，2个灰度相机和2个彩色相机，其中image_2存储了左侧彩色相机采集的RGB图像数据（RGB）
+    3. 语义分割：通过AI模型把点云进行聚类 
+
+         ![](images/语义分割.png)
+    4. 
+
+### 结合策略
+
+- 寻路算法的启动顺序(以local_planner的apf为例)
+   1. 启动roscore
+   2. 启动map_generator.launch
+      1. 启动gazebo world
+      2. 启动rviz
+      3. 定义集群数量，地图类型
+      4. 启动map_generator_node，生成随机地图，并发布全局、局部点云
+   3. 启动sitl_px4_indoor.launch
+      1. 加载p230模型
+      2. 无人机编号，初始位置，航角
+      3. 启动mavros
+   4. 启动uav_control_main_indoor.launch
+      1. 启动uav控制节点
+      2. 启动虚拟摇杆驱动
+   5. 启动apf算法
+      1. 配置算法的具体参数
+- 目标检测与追踪算法的启动顺序
+   1. 启动yolov5_track_all.launch
+      1. 加载gazebo地图，加载p450模型，启动px4
+      2. 启动yolov5_tensorrt_client.py
+      3. 启动siamrpn_track
+      4. 启动yolov5_trt_ros.py
+- 尝试先更改地图和模型，使之符合object_detection的功能
+- 在siamRPN模块中更改追踪策略，改为发布目标点形式，并调用寻路算法
+- 想实现的效果：无人机自动跟随人物运动并避障（可以写一个控制人物模型的脚本，同时使障碍物运动起来，目前的代码需要大改）
+- 需不需要写一个点云生成的算法？
