@@ -49,15 +49,24 @@
 5. fast-lab的算法在点云的基础上进一步抽象成栅格地图，不过那是算法的实现细节
 6. Prometheus的避障算法基本都是定高飞行，fast-lab实现了z轴上的飞行
 7. Prometheus的local_planner是一个父类，apf和vfh分别实现了它的compute_force函数，从而实现了不同的规划算法，其中apf简单地把引力和斥力的和作为期望速度
-8. 在Yolo+SiamRPN中，把YoloV5单独启动为一个Client，通过TCP传递数据，并把数据转为相应的.msg格式，在点击了追踪目标后，无人机将启用SiamRPN追踪该目标
-9. 使用YOLO作为目标检测，siamRPN作为目标跟踪
+
+### 源码改动
+
+1. Modules/common/CMakeLists.txt
+2. darknet_ros部分
+3. prometheus_msg部分
+4. object_detection的CMakeLists，注释掉ellipse和sample部分
+5. 修改YoloDetector.cpp .hpp内容
+6. 修改CheckForObjects.action的内容
+7. 在Yolo+SiamRPN中，把YoloV5单独启动为一个Client，通过TCP传递数据，并把数据转为相应的.msg格式，在点击了追踪目标后，无人机将启用SiamRPN追踪该目标
+8. 使用YOLO作为目标检测，siamRPN作为目标跟踪
    1. 事先标定相机参数,并提供目标的大致大小,根据目标在镜头中的大小可以估算出距目标的距离
    2. 当连续一段时间无法检测到目标时，认定目标丢失
    3. demo里直接根据距离给出速度了,我们应该加入避障的模块
    4. 由siam_rpn.py发布`/prometheus/object_detection/siamrpn_tracker`话题，并由siamrpn_tracker.cpp接受
-10. 摄像头输入的数据会由一个CvBridge的包处理成为cv2格式的图片
-11. 话题`/uav/pometheus/state`中的attitude和attitude_q是描述无人机俯仰角和朝向的
-12. YoloV5的训练过程
+9.  摄像头输入的数据会由一个CvBridge的包处理成为cv2格式的图片
+10. 话题`/uav/pometheus/state`中的attitude和attitude_q是描述无人机俯仰角和朝向的
+11. YoloV5的训练过程
     1.  准备数据集
     2.  在data目录下写好该数据集的相关yaml文件，主要内容是种类数量及名字,数据集的路径
     3.  配置train.py的参数
@@ -67,14 +76,14 @@
       - --epochs，训练轮次
       - --batch_size，根据显卡的显存决定
       - --workers，线程数，根据CPU决定
-13. YoloV5的推理测试
+12. YoloV5的推理测试
     1.  配置detect.py的参数
       - --weights，pt文件的路径，当然也可以是wts文件
       - --save-dir，保存路径
       - --source，要检测的文件或文件夹，为0代表摄像头输入
       - --save-txt
       - --device，数字代表显卡序号，单显卡为0，也可以写'cpu'
-14. ComplexYolo
+13. ComplexYolo
     1.  输入3D点云经过降维而成的2D鸟瞰图，先将三维点云进行栅格化，将点集分布到鸟瞰图空间的网格中，然后编码网格内点集的最大高度，最大强度，点云密度三种信息归一化后分别填充到R，G，B三个通道中形成RGB-Map(获取鸟瞰图（BEV）rgb_map：由强度图intensityMap（608x608）、高度图heightMap（608x608）和密度图densityMap（608x608）共同组成3x608x608维度的鸟瞰图，类似于3通道的RGB图片)然后采用YOLOv2的Darknet19进行特征提取并回归出目标的相对中心点（不直观，点云预处理需要时间）
     2.  将x、y、w、l、rz转换成yolo格式，其中rz用欧拉公式转换为虚部（im）和实部（re）。这样最终真实标签target由8个维度组成，即batch_id、class_id、x、y、w、l、im、re
     3.  删除指定范围之外的激光雷达数据
