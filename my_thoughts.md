@@ -51,7 +51,9 @@
    4. 由siam_rpn.py发布`/prometheus/object_detection/siamrpn_tracker`话题，并由siamrpn_tracker.cpp接受
 10. 摄像头输入的数据会由一个CvBridge的包处理成为cv2格式的图片
 11. 话题`/uav/pometheus/state`中的attitude和attitude_q是描述无人机俯仰角和朝向的
-12. 
+12. 有关目标丢失的策略
+    1.  ![](images/目标丢失的监测与恢复.jpg)
+13. 在论文《基于点云的三维多目标追踪与目标检测算法研究》（DOI:10.27162/d.cnki.gjlin.2022.003464)中提到了根据点云追踪的方法
 
 ### 结合策略
 
