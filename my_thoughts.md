@@ -136,7 +136,7 @@
 17. [FastDepth](https://github.com/dwofk/fast-depth)
     1.  原有的根据相机标定的方式精度很低，考虑使用基于AI模型的深度估计
     2.  该模型直接输出深度图
-    3.  
+    3.  效果有限
 
 ### 结合策略
 
@@ -173,6 +173,7 @@
 
      ![](images/测量深度的方法.jpg)
 - 飞行过程不转向，吊舱也不移动，很容易丢失目标
+- 基于图像的深度估计大多效果有限，不如直接上一个深度相机
   - 飞机转向比较好办，吊舱的话又涉及一个TF转换
   - 关于飞机转向
     - 修改`traj_server_for_prometheus.cpp`的`pub_prometheus_command`函数
