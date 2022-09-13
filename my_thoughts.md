@@ -173,6 +173,16 @@
 
      ![](images/测量深度的方法.jpg)
 - 飞行过程不转向，吊舱也不移动，很容易丢失目标
-  - 飞机的转向实际上需要修改ego的源码，在原始的ego里飞机始终朝向当前航向的切线方向
-  - 吊舱的话又涉及一个TF转换
 - 基于图像的深度估计大多效果有限，不如直接上一个深度相机
+  - 飞机转向比较好办，吊舱的话又涉及一个TF转换
+  - 关于飞机转向
+    - 修改traj_server_for_prometheus.cpp的pub_prometheus_command函数
+    - 为尽可能不破坏原有逻辑，增加一个判断，当启用追踪模块时就使飞机对准目标，否则就按照ego的逻辑来
+    - 当traj_server_for_prometheus.cpp订阅到DetectionInfo，就把角度设为它
+    - 具体的角度需要从DetectionInfo.msg计算，yolov5_tensorrt_client.py并没有对四元数处理，所以要通过position反推
+    - 宗上需要修改的文件有`yolov5_tensorrt_client.py`，`traj_server_for_prometheus.cpp`
+- 实际上，即使目标离开了相机范围，yolov5_tensorrt_client.py依然会把detected定义为True
+  - 为此还需要检查前面的一整套流程，如果是模型的问题需要另外想办法解决
+- 原来的方法对于目标的实际z值估计也有问题
+  - 如果能精确定位目标位置，无人机就能上下飞
+  - 追踪上下移动幅度较大的物体，需要配合吊舱
