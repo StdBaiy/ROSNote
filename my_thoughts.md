@@ -175,13 +175,39 @@
 - 飞行过程不转向，吊舱也不移动，很容易丢失目标
   - 飞机转向比较好办，吊舱的话又涉及一个TF转换
   - 关于飞机转向
-    - 修改traj_server_for_prometheus.cpp的pub_prometheus_command函数
+    - 修改`traj_server_for_prometheus.cpp`的`pub_prometheus_command`函数
     - 为尽可能不破坏原有逻辑，增加一个判断，当启用追踪模块时就使飞机对准目标，否则就按照ego的逻辑来
-    - 当traj_server_for_prometheus.cpp订阅到DetectionInfo，就把角度设为它
-    - 具体的角度需要从DetectionInfo.msg计算，yolov5_tensorrt_client.py并没有对四元数处理，所以要通过position反推
+    - 当`traj_server_for_prometheus.cpp`订阅到`DetectionInfo`，就把角度设为它
+    - 具体的角度需要从`DetectionInfo.msg`计算，`yolov5_tensorrt_client.py`并没有对四元数处理，所以要通过position反推，并把期望的角速度发布出去
     - 宗上需要修改的文件有`yolov5_tensorrt_client.py`，`traj_server_for_prometheus.cpp`
-- 实际上，即使目标离开了相机范围，yolov5_tensorrt_client.py依然会把detected定义为True
+    - 为了尽量不依赖世界坐标系（那样可能会有精度问题），应该直接控制飞机转向的速率
+    - 为了尽量不修改原有的代码结构，我在`UAVCommand.msg`里增加了新的控制模式，并修改了`uav_controller.cpp`的源码，并把`traj_server_for_prometheus.cpp`修改为可在yaml文件里手动指定控制模式
+- 实际上，即使目标离开了相机范围，`yolov5_tensorrt_client.py`依然会把detected定义为True
   - 为此还需要检查前面的一整套流程，如果是模型的问题需要另外想办法解决
 - 原来的方法对于目标的实际z值估计也有问题
   - 如果能精确定位目标位置，无人机就能上下飞
   - 追踪上下移动幅度较大的物体，需要配合吊舱
+- `yolov5_tensorrt_client.py`容易崩溃，需要继续检查
+  - yolo服务器发出的信息最后一位丢失，而脚本未经检查直接读取导致崩溃
+  - 找到原因了，由于预测框没有限定边界，导致出现负数时会挤占一个字节，刚好把最后一位的1给占掉，问题已解决
+- ego在达到目的地之后再设目标有时会不响应，推测和目标点的发射频率太高有关
+  - 在某些情况下，ego的航点不再更新，还没找出具体原因
+  - 状态机固定每隔0.01s检查一次
+  - 有可能和多线程并发有关系
+    - 每次收到一个新目标，就会执行planNextWaypoint()，主函数里每隔0.01s执行一次状态机
+  - 定位到在`planNextWaypoint`中，`planner_manager_->planGlobalTraj`会陷入死循环
+  - 由于ego的主函数ros::spin()是一个单线程轮询函数，一旦一个回调函数阻塞，所有的函数都会阻塞，目前的权宜之计是加一个循环判断，到一定次数自动退出
+  - 为了完美地解决这个问题，还需要继续研究ego的逻辑
+  - 先尝试处于offboard模式时不运行exec_timer定时器
+- ego在把遥控器切换为2挡之后，再换成控制模式，会突然加速（推测和航点的时间规划有关，当处于2挡的时候应该暂停计时）
+  - 推测原因是offboard模式时ego并不知道此时飞机无法动弹，过一段时间再起飞，原先安排给各个轨迹的时间就会被压缩，导致无人机直接加速到最高速度
+  - 阿木实验室在移植ego时，这一块的代码逻辑没有做好
+- 直接修改ego的状态机会导致之前的轨迹还没规划好就开始规划新轨迹，由于规划距离总是比较长，此时飞机还在沿之前的轨迹飞行，容易撞到障碍物
+  - 目前想到的解决办法是降低规划的距离
+- 需要增加目标丢失判断
+  - 根据模型给出的置信度，小于0.2视为丢失
+  - 当连续10次检测都丢失时，视为丢失目标，飞机会飞到最后一次发布的坐标处停下
+  - 重新发现目标时会继续发布坐标
+  - 关于丢失之后的处理逻辑还没有想好（这部分可以和集群联系起来）
+- siamRPN在目标大小产生显著变化的时候无法及时跟进，导致对目标距离的误判
+- 目前的map_generator是写死的，需要把激光雷达获取局部点云
